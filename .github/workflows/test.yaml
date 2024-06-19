@@ -1,9 +1,19 @@
 name: "CI - Test Features"
 on:
   push:
+    paths-ignore:
+      - ./*.md
+      - LICENSE
+      - .gitkeep
+      - .gitignore
     branches:
       - main
   pull_request:
+    paths-ignore:
+      - ./*.md
+      - LICENSE
+      - .gitkeep
+      - .gitignore
   workflow_dispatch:
 
 jobs:
