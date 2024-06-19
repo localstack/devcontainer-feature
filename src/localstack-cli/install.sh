@@ -164,6 +164,8 @@ install_tool() {
             npm install -g $tool aws-cdk
         ;;
         *)
+            PIPX_HOME="/usr/local/pipx" \
+            PIPX_BIN_DIR=/usr/local/bin \
             pipx install $tool
         ;;
     esac
