@@ -1,0 +1,104 @@
+{
+  "version_lts": {
+    "image": "mcr.microsoft.com/devcontainers/base:bookworm",
+    "user": "vscode",
+    "features": {
+      "localstack-cli": {
+        "version": "lts"
+      }
+    }
+  },
+  "version_none": {
+    "image": "mcr.microsoft.com/devcontainers/base:jammy",
+    "user": "vscode",
+    "features": {
+      "localstack-cli": {
+        "version": "none"
+      }
+    }
+  },
+  "version_empty": {
+    "image": "mcr.microsoft.com/devcontainers/base:bookworm",
+    "user": "vscode",
+    "features": {
+      "localstack-cli": {
+        "version": ""
+      }
+    }
+  },
+  "version_3_2_0": {
+    "image": "mcr.microsoft.com/devcontainers/base:jammy",
+    "user": "vscode",
+    "features": {
+      "localstack-cli": {
+        "version": "3.2.0"
+      }
+    }
+  },
+  "install_with_python": {
+    "image": "mcr.microsoft.com/devcontainers/base:jammy",
+    "user": "vscode",
+    "features": {
+      "localstack-cli": {
+        "version": "latest",
+        "installUsingPython": true
+      }
+    }
+  },
+  "install_using_python_3_12_bookworm": {
+    "image": "mcr.microsoft.com/devcontainers/python:1-3.12-bookworm",
+    "user": "vscode",
+    "features": {
+      "localstack-cli": {
+        "version": "latest"
+      }
+    }
+  },
+  "install_with_python_using_python_3_11_bullseye": {
+    "image": "mcr.microsoft.com/devcontainers/python:1-3.11-bullseye",
+    "user": "vscode",
+    "features": {
+      "localstack-cli": {
+        "version": "latest",
+        "installUsingPython": "true"
+      }
+    }
+  },
+  "install_with_awslocal_tool": {
+    "image": "mcr.microsoft.com/devcontainers/base:jammy",
+    "user": "vscode",
+    "features": {
+      "localstack-cli": {
+        "version": "latest",
+        "awslocal": true
+      }
+    }
+  },
+  "install_with_cdklocal_tool": {
+    "image": "mcr.microsoft.com/devcontainers/base:jammy",
+    "user": "vscode",
+    "features": {
+      "ghcr.io/devcontainers/features/node:1": {},
+      "localstack-cli": {
+        "version": "latest",
+        "cdklocal": true
+      }
+    }
+  },
+  "install_with_multiple_tools": {
+    "image": "mcr.microsoft.com/devcontainers/base:jammy",
+    "user": "vscode",
+    "features": {
+      "ghcr.io/devcontainers/features/python:1": {
+          "installTools": false
+      },
+      "ghcr.io/devcontainers/features/node:1": {},
+      "localstack-cli": {
+        "version": "latest",
+        "awslocal": true,
+        "tflocal": true,
+        "cdklocal": true
+      }
+    }
+  }
+}
