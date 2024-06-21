@@ -30,7 +30,7 @@ See the relevant feature's README for supported options.
 {
     "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
     "features": {
-        "ghcr.io/localstack/feature/localstack-cli": {}
+        "ghcr.io/localstack/devcontainer-feature/localstack-cli": {}
     }
 }
 ```
