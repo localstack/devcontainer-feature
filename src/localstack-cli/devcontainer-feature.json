@@ -1,0 +1,62 @@
+{
+    "id": "localstack-cli",
+    "version": "0.1.0",
+    "name": "LocalStack CLI",
+    "documentationURL": "https://github.com/localstack/devcontainer-feature/tree/main/src/localstack-cli",
+    "description": "Installs the Localstack CLI along with needed dependencies and popular \"local\" tools.",
+    "options": {
+        "version": {
+            "type": "string",
+            "proposals": [
+                "",
+                "none",
+                "lts",
+                "latest",
+                "stable",
+                "3.5.0",
+                "3.4.0",
+                "3.3.0",
+                "3.2.0",
+                "3.1.0",
+                "3.0.2",
+                "3.0.1"
+            ],
+            "default": "latest",
+            "description": "Select or enter a Localstack CLI version."
+        },
+        "awslocal": {
+            "type": "boolean",
+            "default": false,
+            "description": "Install awscli-local, a thin wrapper of AWS CLI for LocalStack."
+        },
+        "cdklocal": {
+            "type": "boolean",
+            "default": false,
+            "description": "Install aws-cdk-local, a thin wrapper of AWS CDK for LocalStack."
+        },
+        "pulumilocal": {
+            "type": "boolean",
+            "default": false,
+            "description": "Install pulumi-local, a thin wrapper of Pulumi for LocalStack."
+        },
+        "samlocal": {
+            "type": "boolean",
+            "default": false,
+            "description": "Install aws-sam-cli-local, a thin wrapper of AWS SAM CLI for LocalStack."
+        },
+        "tflocal": {
+            "type": "boolean",
+            "default": false,
+            "description": "Install terraform-local, a thin wrapper of Terraform for LocalStack."
+        },
+        "installUsingPython": {
+            "type": "boolean",
+            "description": "Install LocalStack CLI using Python instead of pipx",
+            "default": false
+        }
+    },
+    "installsAfter": [
+            "ghcr.io/devcontainers/features/python",
+            "ghcr.io/devcontainers/features/node"
+    ]
+}

@@ -1,9 +1,19 @@
 name: "CI - Test Features"
 on:
   push:
+    paths-ignore:
+      - '*.md'
+      - LICENSE
+      - .gitkeep
+      - .gitignore
     branches:
       - main
   pull_request:
+    paths-ignore:
+      - '*.md'
+      - LICENSE
+      - .gitkeep
+      - .gitignore
   workflow_dispatch:
 
 jobs:
@@ -13,8 +23,7 @@ jobs:
     strategy:
       matrix:
         features:
-          - color
-          - hello
+          - localstack-cli
         baseImage:
           - debian:latest
           - ubuntu:latest
@@ -34,8 +43,7 @@ jobs:
     strategy:
       matrix:
         features:
-          - color
-          - hello
+          - localstack-cli
     steps:
       - uses: actions/checkout@v3
 
