@@ -7,6 +7,9 @@ Features are designed to install atop a wide-range of base container images (thi
 > [!NOTE]
 > This repo follows the [**proposed** DevContainer Feature distribution specification](https://containers.dev/implementors/features-distribution/).
 
+> [!WARNING]
+> This repo currently a work in progress which might introduce breaking changes without notification.
+
 ## List of features
 - [LocalStack](https://docs.localstack.cloud/getting-started/): install the LocalStack CLI tool and any of the related _Local™_ tools for:
     - AWS CLI

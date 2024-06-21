@@ -2,7 +2,7 @@ name: "CI - Test Features"
 on:
   push:
     paths-ignore:
-      - ./*.md
+      - *.md
       - LICENSE
       - .gitkeep
       - .gitignore
@@ -10,7 +10,7 @@ on:
       - main
   pull_request:
     paths-ignore:
-      - ./*.md
+      - *.md
       - LICENSE
       - .gitkeep
       - .gitignore
