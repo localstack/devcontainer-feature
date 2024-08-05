@@ -171,11 +171,41 @@ install_with_complete_python_installation() {
     set -e
 }
 
+warn() {
+    echo "WARNING: $1 not found on PATH, though local wrapper is being installed"
+}
+
+is_tool() {
+    ! type $1 &> /dev/null
+    return $?
+}
+
+check_tool() {
+    local tool=$(eval echo "\$$1")
+    case $tool in
+        awscli-local)
+            is_tool aws && warn awscli
+            ;;
+        aws-cdk-local)
+            is_tool cdk && warn aws-cdk
+            ;;
+        pulumi-local)
+            is_tool pulumi && warn pulumi
+            ;;
+        terraform-local)
+            (is_tool terraform || is_tool tofu) && warn terraform/tofu
+            ;;
+        aws-sam-cli-local)
+            is_tool sam && warn aws-sam-cli
+            ;;
+    esac
+}
+
 install_tool() {
     local tool=$(eval echo "\$$1")
     case $tool in
         aws-cdk-local)
-            npm install -g $tool aws-cdk
+            npm install -g $tool
         ;;
         *)
             PIPX_HOME="/usr/local/pipx" \
@@ -187,6 +217,7 @@ install_tool() {
 
 install_tools() {
     for tool in ${TOOLS[@]}; do
+        check_tool $tool
         install_tool $tool
     done
 }
