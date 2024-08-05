@@ -58,6 +58,11 @@
     },
     "installsAfter": [
             "ghcr.io/devcontainers/features/python",
-            "ghcr.io/devcontainers/features/node"
+            "ghcr.io/devcontainers/features/node",
+            "ghcr.io/devcontainers/features/aws-cli",
+            "ghcr.io/devcontainers-contrib/features/aws-cdk",
+            "ghcr.io/customink/codespaces-features/sam-cli",
+            "ghcr.io/devcontainers-contrib/features/pulumi",
+            "ghcr.io/devcontainers/features/terraform"
     ]
 }
