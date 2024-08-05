@@ -72,11 +72,25 @@ pkg_mgr_update() {
     esac
 }
 
+add_backports() {
+    case ${ID} in
+        debian)
+            echo "deb http://ftp.debian.org/debian ${VERSION_CODENAME}-backports main" |
+            tee /etc/apt/sources.list.d/backports.list
+            ;;
+        ubuntu)
+            echo "deb http://archive.ubuntu.com/ubuntu ${VERSION_CODENAME}-backports main" |
+            tee /etc/apt/sources.list.d/backports.list
+            ;;
+    esac
+}
+
 # Checks if packages are installed and installs them if not
 check_packages() {
     case ${ADJUSTED_ID} in
         debian)
             if ! dpkg -s "$@" > /dev/null 2>&1; then
+                add_backports
                 pkg_mgr_update
                 ${INSTALL_CMD} "$@"
             fi
@@ -176,6 +190,8 @@ install_tools() {
         install_tool $tool
     done
 }
+
+add_backports
 
 install_using_pip_strategy
 
