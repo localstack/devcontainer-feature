@@ -72,11 +72,25 @@ pkg_mgr_update() {
     esac
 }
 
+add_backports() {
+    case ${ID} in
+        debian)
+            echo "deb http://ftp.debian.org/debian ${VERSION_CODENAME}-backports main" |
+            tee /etc/apt/sources.list.d/backports.list
+            ;;
+        ubuntu)
+            echo "deb http://archive.ubuntu.com/ubuntu ${VERSION_CODENAME}-backports main" |
+            tee /etc/apt/sources.list.d/backports.list
+            ;;
+    esac
+}
+
 # Checks if packages are installed and installs them if not
 check_packages() {
     case ${ADJUSTED_ID} in
         debian)
             if ! dpkg -s "$@" > /dev/null 2>&1; then
+                add_backports
                 pkg_mgr_update
                 ${INSTALL_CMD} "$@"
             fi
@@ -157,11 +171,41 @@ install_with_complete_python_installation() {
     set -e
 }
 
+warn() {
+    echo "WARNING: $1 not found on PATH, though local wrapper is being installed"
+}
+
+is_tool() {
+    ! type $1 &> /dev/null
+    return $?
+}
+
+check_tool() {
+    local tool=$(eval echo "\$$1")
+    case $tool in
+        awscli-local)
+            is_tool aws && warn awscli
+            ;;
+        aws-cdk-local)
+            is_tool cdk && warn aws-cdk
+            ;;
+        pulumi-local)
+            is_tool pulumi && warn pulumi
+            ;;
+        terraform-local)
+            (is_tool terraform || is_tool tofu) && warn terraform/tofu
+            ;;
+        aws-sam-cli-local)
+            is_tool sam && warn aws-sam-cli
+            ;;
+    esac
+}
+
 install_tool() {
     local tool=$(eval echo "\$$1")
     case $tool in
         aws-cdk-local)
-            npm install -g $tool aws-cdk
+            npm install -g $tool
         ;;
         *)
             PIPX_HOME="/usr/local/pipx" \
@@ -173,9 +217,12 @@ install_tool() {
 
 install_tools() {
     for tool in ${TOOLS[@]}; do
+        check_tool $tool
         install_tool $tool
     done
 }
+
+add_backports
 
 install_using_pip_strategy
 
