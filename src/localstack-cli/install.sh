@@ -182,6 +182,7 @@ is_tool() {
 
 check_tool() {
     local tool=$(eval echo "\$$1")
+    set +e
     case $tool in
         awscli-local)
             is_tool aws && warn awscli
@@ -199,6 +200,7 @@ check_tool() {
             is_tool sam && warn aws-sam-cli
             ;;
     esac
+    set -e
 }
 
 install_tool() {
