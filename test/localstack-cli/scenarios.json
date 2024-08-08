@@ -1,6 +1,6 @@
 {
   "version_lts": {
-    "image": "mcr.microsoft.com/devcontainers/base:bookworm",
+    "image": "mcr.microsoft.com/devcontainers/base:bullseye",
     "user": "vscode",
     "features": {
       "localstack-cli": {
@@ -9,7 +9,7 @@
     }
   },
   "version_none": {
-    "image": "mcr.microsoft.com/devcontainers/base:jammy",
+    "image": "mcr.microsoft.com/devcontainers/base:focal",
     "user": "vscode",
     "features": {
       "localstack-cli": {
