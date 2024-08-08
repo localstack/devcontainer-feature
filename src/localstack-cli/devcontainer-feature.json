@@ -1,6 +1,6 @@
 {
     "id": "localstack-cli",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "name": "LocalStack CLI",
     "documentationURL": "https://github.com/localstack/devcontainer-feature/tree/main/src/localstack-cli",
     "description": "Installs the Localstack CLI along with needed dependencies and popular \"local\" tools.",
