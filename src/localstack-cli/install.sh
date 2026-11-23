@@ -151,9 +151,22 @@ ln -sf "${INSTALL_DIR}/lstk" "${BIN_LINK}"
 install_completions "${INSTALL_DIR}"
 install_manpages "${INSTALL_DIR}"
 
-# Let the container user run `lstk update` without sudo.
+# Let the container user run `lstk update` without sudo. Access goes through
+# an `lstk` group rather than user ownership: on Linux hosts the devcontainer
+# CLI remaps the remote user's UID after Features install, which would leave
+# a user-owned directory pointing at a stale UID. Group membership survives it.
+chown -R root:root "${INSTALL_DIR}"
 if [ -n "${_REMOTE_USER:-}" ] && [ "${_REMOTE_USER}" != "root" ] && id -u "${_REMOTE_USER}" > /dev/null 2>&1; then
-    chown -R "${_REMOTE_USER}" "${INSTALL_DIR}"
+    if command -v groupadd > /dev/null 2>&1; then
+        getent group lstk > /dev/null 2>&1 || groupadd -r lstk
+        usermod -aG lstk "${_REMOTE_USER}"
+    else
+        getent group lstk > /dev/null 2>&1 || addgroup -S lstk
+        addgroup "${_REMOTE_USER}" lstk
+    fi
+    chgrp -R lstk "${INSTALL_DIR}"
+    chmod -R g+rwX "${INSTALL_DIR}"
+    find "${INSTALL_DIR}" -type d -exec chmod g+s {} +
 fi
 
 if [ "${INSTALL_PULUMILOCAL}" = "true" ]; then
