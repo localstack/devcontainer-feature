@@ -1,7 +1,7 @@
 
-# LocalStack CLI (localstack-cli)
+# LocalStack CLI (lstk) (localstack-cli)
 
-Installs the Localstack CLI along with needed dependencies and popular "local" tools.
+Installs lstk, the LocalStack CLI for managing LocalStack and running aws, terraform, cdk and sam commands against it.
 
 ## Example Usage
 
@@ -15,15 +15,13 @@ Installs the Localstack CLI along with needed dependencies and popular "local" t
 
 | Options Id | Description | Type | Default Value |
 |-----|-----|-----|-----|
-| version | Select or enter a Localstack CLI version. | string | latest |
-| awslocal | Install awscli-local, a thin wrapper of AWS CLI for LocalStack. | boolean | false |
-| cdklocal | Install aws-cdk-local, a thin wrapper of AWS CDK for LocalStack. | boolean | false |
-| pulumilocal | Install pulumi-local, a thin wrapper of Pulumi for LocalStack. | boolean | false |
-| samlocal | Install aws-sam-cli-local, a thin wrapper of AWS SAM CLI for LocalStack. | boolean | false |
-| tflocal | Install terraform-local, a thin wrapper of Terraform for LocalStack. | boolean | false |
-| installUsingPython | Install LocalStack CLI using Python instead of pipx | boolean | false |
+| version | Select or enter an lstk version. | string | latest |
 
-Available versions of the Localstack CLI can be found here: https://pypi.org/project/localstack/.
+Installs [lstk](https://github.com/localstack/lstk), the LocalStack CLI built in Go. Available versions can be found here: https://github.com/localstack/lstk/releases.
+
+lstk replaces both the Python `localstack` CLI and the separate `awslocal`, `cdklocal`, `samlocal` and `tflocal` wrappers: run `lstk` to start LocalStack, and `lstk aws`, `lstk cdk`, `lstk sam` or `lstk terraform` to send commands to it with the endpoint, credentials and region already set.
+
+lstk is downloaded from its GitHub releases (linux `amd64` and `arm64`) and checked against the release checksums.
 
 ## OS Support
 
@@ -31,11 +29,8 @@ This Feature should work on recent versions of Debian/Ubuntu-based distributions
 
 `bash` is required to execute the `install.sh` script.
 
-`cdklocal` option requires `npm` to be installed which is not handled by this feature.
-All other tools are installed by `pipx` which is installed via package manager or the Python installation. The latter can be combined with the Python feature.
-
 > [!NOTE]
-> None of the wrapped tool(s) (ie Terraform, Pulumi or AWS CLI...etc), are handled by this feature, to install the underlying tool(s) please use the respective feature from the [DevContainer Feature Community Index](https://containers.dev/features).
+> The tools that lstk proxies (AWS CLI, AWS CDK, AWS SAM CLI or Terraform) are not handled by this feature. To install them, use the respective feature from the [DevContainer Feature Community Index](https://containers.dev/features).
 
 ---
 

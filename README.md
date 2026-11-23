@@ -11,18 +11,13 @@ Features are designed to install atop a wide-range of base container images (thi
 > This repo currently a work in progress which might introduce breaking changes without notification.
 
 ## List of features
-- [LocalStack](https://docs.localstack.cloud/getting-started/): install the LocalStack CLI tool and any of the related _Local™_ tools for:
-    - AWS CLI
-    - AWS CDK
-    - AWS SAM CLI
-    - Terraform
-    - Pulumi
+- [LocalStack](https://docs.localstack.cloud/getting-started/): install [lstk](https://github.com/localstack/lstk), the LocalStack CLI, which also proxies AWS CLI, AWS CDK, AWS SAM CLI and Terraform commands to LocalStack.
 
 ## Usage
 To reference a feature from this repository, add the desired features to a `devcontainer.json`.
 Each feature has a `README.md` that shows how to reference the feature and which options are available for that feature.
 
-The example below installs the LocalStack CLI declared in the `./src` directory of this repository.
+The example below installs lstk, the LocalStack CLI, declared in the `./src` directory of this repository.
 
 See the relevant feature's README for supported options.
 

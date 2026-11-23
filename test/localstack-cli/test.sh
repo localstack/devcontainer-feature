@@ -2,11 +2,12 @@
 
 set -e
 
-# Optional: Import test library
+# Import test library for `check` command
 source dev-container-features-test-lib
 
-# Definition specific tests
-check "version" localstack --version
+check "lstk" type lstk
+check "lstk version" lstk --version
+check "no localstack python cli" bash -c "! type localstack"
 
 # Report result
 reportResults

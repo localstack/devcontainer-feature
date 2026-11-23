@@ -1,68 +1,18 @@
 {
     "id": "localstack-cli",
-    "version": "0.1.3",
-    "name": "LocalStack CLI",
+    "version": "0.2.0",
+    "name": "LocalStack CLI (lstk)",
     "documentationURL": "https://github.com/localstack/devcontainer-feature/tree/main/src/localstack-cli",
-    "description": "Installs the Localstack CLI along with needed dependencies and popular \"local\" tools.",
+    "description": "Installs lstk, the LocalStack CLI for managing LocalStack and running aws, terraform, cdk and sam commands against it.",
     "options": {
         "version": {
             "type": "string",
             "proposals": [
-                "",
-                "none",
-                "lts",
                 "latest",
-                "stable",
-                "3.6.0",
-                "3.5.0",
-                "3.4.0",
-                "3.3.0",
-                "3.2.0",
-                "3.1.0",
-                "3.0.2",
-                "3.0.1"
+                "1.5.0"
             ],
             "default": "latest",
-            "description": "Select or enter a Localstack CLI version."
-        },
-        "awslocal": {
-            "type": "boolean",
-            "default": false,
-            "description": "Install awscli-local, a thin wrapper of AWS CLI for LocalStack."
-        },
-        "cdklocal": {
-            "type": "boolean",
-            "default": false,
-            "description": "Install aws-cdk-local, a thin wrapper of AWS CDK for LocalStack."
-        },
-        "pulumilocal": {
-            "type": "boolean",
-            "default": false,
-            "description": "Install pulumi-local, a thin wrapper of Pulumi for LocalStack."
-        },
-        "samlocal": {
-            "type": "boolean",
-            "default": false,
-            "description": "Install aws-sam-cli-local, a thin wrapper of AWS SAM CLI for LocalStack."
-        },
-        "tflocal": {
-            "type": "boolean",
-            "default": false,
-            "description": "Install terraform-local, a thin wrapper of Terraform for LocalStack."
-        },
-        "installUsingPython": {
-            "type": "boolean",
-            "description": "Install LocalStack CLI using Python instead of pipx",
-            "default": false
+            "description": "Select or enter an lstk version."
         }
-    },
-    "installsAfter": [
-            "ghcr.io/devcontainers/features/python",
-            "ghcr.io/devcontainers/features/node",
-            "ghcr.io/devcontainers/features/aws-cli",
-            "ghcr.io/devcontainers-extra/features/aws-cdk",
-            "ghcr.io/customink/codespaces-features/sam-cli",
-            "ghcr.io/devcontainers-extra/features/pulumi",
-            "ghcr.io/devcontainers/features/terraform"
-    ]
+    }
 }
