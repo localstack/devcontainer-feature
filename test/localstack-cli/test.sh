@@ -1,12 +1,11 @@
 #!/bin/bash
-
 set -e
 
-# Optional: Import test library
 source dev-container-features-test-lib
 
-# Definition specific tests
-check "version" localstack --version
+check "lstk is on PATH" bash -c "command -v lstk"
+check "lstk version" lstk --version
+check "lstk help lists tool proxies" bash -c "lstk --help | grep -E '^ +terraform '"
+check "legacy localstack CLI is not installed" bash -c "! command -v localstack"
 
-# Report result
 reportResults
