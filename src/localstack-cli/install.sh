@@ -86,7 +86,7 @@ install_lstk() {
     # Keep the binary next to its bundled extensions and link it onto the PATH
     rm -rf "${LSTK_INSTALL_DIR}"
     mkdir -p "${LSTK_INSTALL_DIR}"
-    tar -xzf "${tmp_dir}/${archive}" -C "${LSTK_INSTALL_DIR}"
+    tar -xzf "${tmp_dir}/${archive}" -C "${LSTK_INSTALL_DIR}" --no-same-owner
     ln -sf "${LSTK_INSTALL_DIR}/lstk" /usr/local/bin/lstk
 
     if [ -d /usr/share/bash-completion/completions ]; then
