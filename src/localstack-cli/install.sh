@@ -1,236 +1,164 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# Installs lstk, the LocalStack CLI, from its GitHub release archive.
+set -euo pipefail
 
-set -e
+LSTK_VERSION="${VERSION:-latest}"
+INSTALL_PULUMILOCAL="${PULUMILOCAL:-false}"
+LSTK_REPO="https://github.com/localstack/lstk"
+INSTALL_DIR="/usr/local/lib/lstk"
+BIN_LINK="/usr/local/bin/lstk"
 
-LS_VERSION=${VERSION:-"latest"}
-INSTALL_USING_PYTHON=${INSTALLUSINGPYTHON:-false}
-test "${AWSLOCAL:-false}" = true && LOCAL_AWS=awscli-local
-test "${CDKLOCAL:-false}" = true && LOCAL_CDK=aws-cdk-local
-test "${PULUMILOCAL:-false}" = true && LOCAL_PULUMI=pulumi-local
-test "${TFLOCAL:-false}" = true && LOCAL_TF="terraform-local"
-test "${SAMLOCAL:-false}" = true && LOCAL_SAM="aws-sam-cli-local"
-PREFIX=LOCAL_
-
-eval 'TOOLS=(${!'"$PREFIX"'@})'
-
-# Clean up
-rm -rf /var/lib/apt/lists/*
+log() { echo "(*) $*"; }
+fail() { echo "(!) $*" >&2; exit 1; }
 
 if [ "$(id -u)" -ne 0 ]; then
-    echo -e 'Script must be run as root. Use sudo, su, or add "USER root" to your Dockerfile before running this script.'
-    exit 1
+    fail 'Script must be run as root. Use sudo, su, or add "USER root" to your Dockerfile before running this script.'
 fi
 
-# Bring in ID, ID_LIKE, VERSION_ID, VERSION_CODENAME
-. /etc/os-release
-# Get an adjusted ID independent of distro variants
-MAJOR_VERSION_ID=$(echo ${VERSION_ID} | cut -d . -f 1)
-if [ "${ID}" = "debian" ] || [ "${ID_LIKE}" = "debian" ]; then
-    ADJUSTED_ID="debian"
-else
-    echo "Linux distro ${ID} not supported."
-    exit 1
-fi
+# curl, tar, gzip and CA certificates are the only runtime needs.
+# lstk itself is a static binary, so no Python or Node.js is required.
+install_prerequisites() {
+    local missing=()
+    command -v curl > /dev/null 2>&1 || missing+=(curl)
+    command -v tar > /dev/null 2>&1 || missing+=(tar)
+    command -v gzip > /dev/null 2>&1 || missing+=(gzip)
+    [ -f /etc/ssl/certs/ca-certificates.crt ] || [ -f /etc/pki/tls/certs/ca-bundle.crt ] || missing+=(ca-certificates)
+    [ "${#missing[@]}" -eq 0 ] && return 0
 
-# Setup INSTALL_CMD & PKG_MGR_CMD
-if type apt-get > /dev/null 2>&1; then
-    PKG_MGR_CMD=apt-get
-    INSTALL_CMD="${PKG_MGR_CMD} -y install --no-install-recommends"
-elif type microdnf > /dev/null 2>&1; then
-    PKG_MGR_CMD=microdnf
-    INSTALL_CMD="${PKG_MGR_CMD} ${INSTALL_CMD_ADDL_REPOS} -y install --refresh --best --nodocs --noplugins --setopt=install_weak_deps=0"
-elif type dnf > /dev/null 2>&1; then
-    PKG_MGR_CMD=dnf
-    INSTALL_CMD="${PKG_MGR_CMD} ${INSTALL_CMD_ADDL_REPOS} -y install --refresh --best --nodocs --noplugins --setopt=install_weak_deps=0"
-else
-    PKG_MGR_CMD=yum
-    INSTALL_CMD="${PKG_MGR_CMD} ${INSTALL_CMD_ADDL_REPOS} -y install --noplugins --setopt=install_weak_deps=0"
-fi
-
-# Ensure apt is in non-interactive to avoid prompts
-export DEBIAN_FRONTEND=noninteractive
-
-# General requirements
-REQUIRED_PKGS=""
-case ${ADJUSTED_ID} in
-    debian)
-        REQUIRED_PKGS="${REQUIRED_PKGS} \
-            gcc \
-            python3-dev \
-            python3-venv"
-        ;;
-esac
-
-pkg_mgr_update() {
-    case ${ADJUSTED_ID} in
-        debian)
-            if [ "$(find /var/lib/apt/lists -iname '*' | wc -l)" = "1" ]; then
-                echo "Running apt-get update..."
-                ${PKG_MGR_CMD} update -y
-            fi
-            ;;
-    esac
-}
-
-add_backports() {
-    case ${ID} in
-        debian)
-            echo "deb http://ftp.debian.org/debian ${VERSION_CODENAME}-backports main" |
-            tee /etc/apt/sources.list.d/backports.list
-            ;;
-        ubuntu)
-            echo "deb http://archive.ubuntu.com/ubuntu ${VERSION_CODENAME}-backports main" |
-            tee /etc/apt/sources.list.d/backports.list
-            ;;
-    esac
-}
-
-# Checks if packages are installed and installs them if not
-check_packages() {
-    case ${ADJUSTED_ID} in
-        debian)
-            if ! dpkg -s "$@" > /dev/null 2>&1; then
-                add_backports
-                pkg_mgr_update
-                ${INSTALL_CMD} "$@"
-            fi
-            ;;
-    esac
-}
-
-install_using_pip_strategy() {
-    local ver=""
-    case ${LS_VERSION} in
-        "")
-        ;&
-        none)
-        ;&
-        lts)
-        ;&
-        latest)
-        ;&
-        stable)
-            ver=""
-        ;;
-        *)
-            ver="==${LS_VERSION}"
-        ;;
-    esac
-
-    if [ "${INSTALL_USING_PYTHON}" = "true" ]; then
-        install_with_complete_python_installation "${ver}" || install_with_pipx "${ver}" || return 1
+    log "Installing prerequisites: ${missing[*]}"
+    if command -v apt-get > /dev/null 2>&1; then
+        export DEBIAN_FRONTEND=noninteractive
+        apt-get update -y
+        apt-get install -y --no-install-recommends "${missing[@]}"
+        rm -rf /var/lib/apt/lists/*
+    elif command -v apk > /dev/null 2>&1; then
+        apk add --no-cache "${missing[@]}"
+    elif command -v microdnf > /dev/null 2>&1; then
+        microdnf install -y "${missing[@]}"
+        microdnf clean all
+    elif command -v dnf > /dev/null 2>&1; then
+        dnf install -y "${missing[@]}"
+        dnf clean all
+    elif command -v yum > /dev/null 2>&1; then
+        yum install -y "${missing[@]}"
+        yum clean all
     else
-        install_with_pipx "${ver}" || install_with_complete_python_installation "${ver}" || return 1
+        fail "Missing ${missing[*]} and no supported package manager (apt-get, apk, dnf, microdnf, yum) found."
     fi
 }
 
-install_with_pipx() {
-    echo "(*) Attempting to install globally with pipx..."
-    local ver="$1"
-    export 
-    local 
-
-    if ! type pipx > /dev/null 2>&1; then
-        echo "(*) Installing pipx..."
-        check_packages pipx ${REQUIRED_PKGS}
-        pipx ensurepath # Ensures PIPX_BIN_DIR is on the PATH
-    fi
-
-    PIPX_HOME="/usr/local/pipx" \
-    PIPX_BIN_DIR=/usr/local/bin \
-    pipx install localstack${ver} --include-deps
-
-    echo "(*) Finished installing globally with pipx."
+detect_arch() {
+    case "$(uname -m)" in
+        x86_64 | amd64) echo "amd64" ;;
+        aarch64 | arm64) echo "arm64" ;;
+        *) fail "Unsupported architecture $(uname -m). lstk ships linux/amd64 and linux/arm64 builds." ;;
+    esac
 }
 
-install_with_complete_python_installation() {
-    local ver="$1"
-    if ! dpkg -s ${REQUIRED_PKGS} > /dev/null 2>&1; then
-        check_packages ${REQUIRED_PKGS}
-    fi
-    export PIPX_HOME=/usr/local/pipx
-    mkdir -p ${PIPX_HOME}
-    export PIPX_BIN_DIR=/usr/local/bin
-    export PYTHONUSERBASE=/tmp/pip-tmp
-    export PIP_CACHE_DIR=/tmp/pip-tmp/cache
-    pipx_bin=pipx
-    if ! type pipx > /dev/null 2>&1; then
-        pip3 install --disable-pip-version-check --no-cache-dir --user pipx
-        pipx_bin=/tmp/pip-tmp/bin/pipx
-    fi
+# Resolves "latest" through the release redirect, which avoids the
+# GitHub API and its rate limit for anonymous builds.
+resolve_version() {
+    local requested="$1"
+    case "${requested}" in
+        "" | latest)
+            local url
+            url=$(curl -fsSLI -o /dev/null -w '%{url_effective}' "${LSTK_REPO}/releases/latest") \
+                || fail "Could not resolve the latest lstk release from ${LSTK_REPO}/releases/latest"
+            requested="${url##*/}"
+            ;;
+    esac
+    requested="${requested#v}"
+    [[ "${requested}" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.-]+)?$ ]] \
+        || fail "Invalid lstk version '${requested}'. Use 'latest' or a release such as '1.5.0'."
+    echo "${requested}"
+}
 
-    set +e
-        ${pipx_bin} install --pip-args '--no-cache-dir --force-reinstall --include-deps' -f localstack${ver}
+sha256_check() {
+    if command -v sha256sum > /dev/null 2>&1; then
+        sha256sum -c -
+    else
+        shasum -a 256 -c -
+    fi
+}
 
-        # Fail gracefully
-        if [ "$?" != 0 ]; then
-            echo "Could not install localstack${ver} via pip3"
-            rm -rf /tmp/pip-tmp
-            return 1
+install_completions() {
+    local src="$1/completions"
+    [ -d "${src}" ] || return 0
+    install -D -m 0644 "${src}/lstk.bash" /usr/share/bash-completion/completions/lstk
+    install -D -m 0644 "${src}/lstk.zsh" /usr/local/share/zsh/site-functions/_lstk
+    install -D -m 0644 "${src}/lstk.fish" /usr/share/fish/vendor_completions.d/lstk.fish
+}
+
+install_manpages() {
+    local src="$1/manpages"
+    [ -d "${src}" ] || return 0
+    mkdir -p /usr/local/share/man/man1
+    cp "${src}"/*.1 /usr/local/share/man/man1/
+}
+
+# pulumi-local is the one LocalStack wrapper without an lstk equivalent.
+# It is a Python package, so pipx is only pulled in when it is requested.
+install_pulumilocal() {
+    if ! command -v pipx > /dev/null 2>&1; then
+        log "Installing pipx"
+        if command -v apt-get > /dev/null 2>&1; then
+            export DEBIAN_FRONTEND=noninteractive
+            apt-get update -y
+            apt-get install -y --no-install-recommends pipx
+            rm -rf /var/lib/apt/lists/*
+        elif command -v apk > /dev/null 2>&1; then
+            apk add --no-cache pipx
+        elif command -v pip3 > /dev/null 2>&1; then
+            pip3 install --no-cache-dir pipx
+        else
+            fail "pulumilocal needs pipx. Add the Python Feature (ghcr.io/devcontainers/features/python) or install pipx in the base image."
         fi
-    set -e
+    fi
+    log "Installing pulumi-local"
+    PIPX_HOME=/usr/local/pipx PIPX_BIN_DIR=/usr/local/bin pipx install --force pulumi-local
+    command -v pulumi > /dev/null 2>&1 \
+        || echo "(!) pulumi is not on PATH. Add ghcr.io/devcontainers-extra/features/pulumi:1 to use pulumilocal."
 }
 
-warn() {
-    echo "WARNING: $1 not found on PATH, though local wrapper is being installed"
-}
+install_prerequisites
 
-is_tool() {
-    ! type $1 &> /dev/null
-    return $?
-}
+ARCH="$(detect_arch)"
+VERSION_NUMBER="$(resolve_version "${LSTK_VERSION}")"
+ARCHIVE="lstk_${VERSION_NUMBER}_linux_${ARCH}.tar.gz"
+BASE_URL="${LSTK_REPO}/releases/download/v${VERSION_NUMBER}"
 
-check_tool() {
-    local tool=$(eval echo "\$$1")
-    set +e
-    case $tool in
-        awscli-local)
-            is_tool aws && warn awscli
-            ;;
-        aws-cdk-local)
-            is_tool cdk && warn aws-cdk
-            ;;
-        pulumi-local)
-            is_tool pulumi && warn pulumi
-            ;;
-        terraform-local)
-            (is_tool terraform || is_tool tofu) && warn terraform/tofu
-            ;;
-        aws-sam-cli-local)
-            is_tool sam && warn aws-sam-cli
-            ;;
-    esac
-    set -e
-}
+TMP_DIR="$(mktemp -d)"
+trap 'rm -rf "${TMP_DIR}"' EXIT
 
-install_tool() {
-    local tool=$(eval echo "\$$1")
-    case $tool in
-        aws-cdk-local)
-            npm install -g $tool
-        ;;
-        *)
-            PIPX_HOME="/usr/local/pipx" \
-            PIPX_BIN_DIR=/usr/local/bin \
-            pipx install $tool
-        ;;
-    esac
-}
+log "Downloading lstk ${VERSION_NUMBER} (linux/${ARCH})"
+curl -fsSL --retry 3 -o "${TMP_DIR}/${ARCHIVE}" "${BASE_URL}/${ARCHIVE}" \
+    || fail "Could not download ${BASE_URL}/${ARCHIVE}. Check that lstk ${VERSION_NUMBER} exists."
+curl -fsSL --retry 3 -o "${TMP_DIR}/checksums.txt" "${BASE_URL}/checksums.txt" \
+    || fail "Could not download ${BASE_URL}/checksums.txt"
 
-install_tools() {
-    for tool in ${TOOLS[@]}; do
-        check_tool $tool
-        install_tool $tool
-    done
-}
+log "Verifying checksum"
+(cd "${TMP_DIR}" && grep " ${ARCHIVE}\$" checksums.txt | sha256_check) \
+    || fail "Checksum verification failed for ${ARCHIVE}"
 
-add_backports
+# The archive carries the lstk binary plus the bundled extensions
+# (e.g. `lstk doctor`). lstk finds them next to its resolved executable,
+# so the archive is unpacked as a whole and only the binary is linked.
+rm -rf "${INSTALL_DIR}"
+mkdir -p "${INSTALL_DIR}"
+tar -xzf "${TMP_DIR}/${ARCHIVE}" -C "${INSTALL_DIR}"
+ln -sf "${INSTALL_DIR}/lstk" "${BIN_LINK}"
 
-install_using_pip_strategy
+install_completions "${INSTALL_DIR}"
+install_manpages "${INSTALL_DIR}"
 
-install_tools
+# Let the container user run `lstk update` without sudo.
+if [ -n "${_REMOTE_USER:-}" ] && [ "${_REMOTE_USER}" != "root" ] && id -u "${_REMOTE_USER}" > /dev/null 2>&1; then
+    chown -R "${_REMOTE_USER}" "${INSTALL_DIR}"
+fi
 
-# Clean up
-rm -rf /var/lib/apt/lists/*
+if [ "${INSTALL_PULUMILOCAL}" = "true" ]; then
+    install_pulumilocal
+fi
 
-echo "Done!"
+"${BIN_LINK}" --version
+log "Done."
